@@ -19,11 +19,12 @@ const courses:[string,string,string,string,string[]][]=[
  ['volatilomica','sub-volatilomica','Volatilómica','Estudiar perfiles de compuestos volátiles mediante muestreo, análisis instrumental y tratamiento de datos.', ['Muestreo de volátiles|Espacio de cabeza y microextracción (SPME)|Blancos, contaminación y estabilidad de muestra','Caracterización|GC-MS y separación de volátiles|Índices de retención y bibliotecas espectrales','Interpretación de perfiles|Quimiometría de perfiles volátiles|Aplicaciones, validación y límites de inferencia']],
 ];
 export const universityContent:Item[]=[
- make('sub-quimiometria','subbranch','Quimiometría',{parent:'rama-3',position:30,description:'Estadística, diseño experimental y análisis multivariado de datos químicos.'}),
- make('sub-metabolomica','subbranch','Metabolómica',{parent:'rama-5',position:31,description:'Estudio de metabolitos y sus variaciones en sistemas biológicos.'}),
- make('sub-volatilomica','subbranch','Volatilómica',{parent:'rama-3',position:32,description:'Estudio de perfiles de compuestos volátiles; también denominada volatolómica. Conecta química analítica, metabolómica y ambiente.'}),
+ make('sub-quimiometria','branch','Quimiometría',{position:7,description:'Estadística, diseño experimental y análisis multivariado de datos químicos.'}),
+ make('sub-metabolomica','branch','Metabolómica',{position:8,description:'Estudio de metabolitos y sus variaciones en sistemas biológicos.'}),
+ make('sub-volatilomica','branch','Volatilómica',{position:9,description:'Estudio de perfiles de compuestos volátiles; también denominada volatolómica. Conecta química analítica, metabolómica y ambiente.'}),
 ];
 for(const [slug,parent,title,objectives,units] of courses){const id='pregrado-'+slug;
  universityContent.push(make(id,'course',title,{parent,position:courses.findIndex(c=>c[0]===slug),description:objectives,objectives,example:true,body:'Espacio de asignatura de pregrado. Organización inicial editable: ajustar requisitos, profundidad y actividades al programa universitario. Las guías, clases, ejercicios y videos se publicarán progresivamente.'}));
  units.forEach((entry,position)=>{const [title,...topics]=entry.split('|');const unit=id+'-u'+(position+1);universityContent.push(make(unit,'unit',title,{parent:id,position,example:true}));topics.forEach((title,n)=>universityContent.push(make(unit+'-t'+(n+1),'topic',title,{parent:unit,position:n,example:true,description:'Tema propuesto para '+courses.find(c=>c[0]===slug)![2]+'.',body:'Espacio preparado para desarrollar este tema a nivel de pregrado. La explicación, los ejemplos, las actividades y la bibliografía están pendientes de incorporar.'})));});
 }
+
