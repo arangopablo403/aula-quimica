@@ -1,6 +1,7 @@
 import {naturalScienceContent} from './school';
 import {annualContent} from './curriculum';
 import {universityContent} from './university';
+import {expandDegreePlan} from './degree-plan';
 export type Item = {id:string; kind:string; title:string; status:string; position:number; parent?:string; links?:string[]; description?:string; objectives?:string; body?:string; examples?:string; activities?:string; bibliography?:string; url?:string; file?:string; filename?:string; resourceType?:string; transcript?:string; authors?:string; date?:string; keywords?:string; area?:string; publicationType?:string; image?:string; featured?:boolean; current?:boolean; example?:boolean; name?:string; email?:string; education?:string; interests?:string; projects?:string; social?:string; plan?:string; scholar?:string; orcid?:string; researchgate?:string; researchIntro?:string; researchLines?:string; [key:string]:unknown};
 export const branches=['Química general','Química inorgánica','Química orgánica','Química analítica','Fisicoquímica','Bioquímica','Química ambiental'];
 const make=(id:string,kind:string,title:string,extra:Partial<Item>={}):Item=>({id,kind,title,status:'published',position:0,...extra});
@@ -17,7 +18,7 @@ const baseSeed:Item[]=[
  make('saber-dilucion','topic','Interpreta una dilución',{parent:'saber',example:true,body:'A una solución se le añade agua sin pérdida de soluto. ¿Qué sucede con la concentración?\n\nA. Aumenta.\nB. Disminuye.\nC. Permanece igual.\nD. Se duplica.',examples:'Respuesta explicada: B. La cantidad de soluto se mantiene y el volumen aumenta. Como c = n/V, la concentración disminuye.\n\nEjercicio de aplicación: si el volumen final es el doble del inicial, la concentración final es la mitad. Este es un ejemplo didáctico, no una pregunta oficial.'}),
  make('perfil','profile','Sobre mí',{name:'',description:'',education:'',interests:'',projects:'',email:'',social:''}),
 ];
-export const seed:Item[]=[...new Map([...baseSeed,...universityContent,...naturalScienceContent,...annualContent.map(i=>({...baseSeed.find(b=>b.id===i.id),...i}))].map(i=>[i.id,i])).values()];
+export const seed:Item[]=expandDegreePlan([...new Map([...baseSeed,...universityContent,...naturalScienceContent,...annualContent.map(i=>({...baseSeed.find(b=>b.id===i.id),...i}))].map(i=>[i.id,i])).values()]);
 export const kinds:Record<string,string>={branch:'Rama',subbranch:'Subrama',course:'Asignatura',period:'Período',unit:'Unidad',topic:'Tema',resource:'Recurso',research:'Investigación',profile:'Perfil'};
 export function ancestry(item:Item, all:Item[]):Item[]{const out:Item[]=[];const visited=new Set([item.id]);let p=item.parent||(item.kind==='resource'?item.links?.[0]:undefined);while(p&&!visited.has(p)){visited.add(p);const x=all.find(i=>i.id===p);if(!x)break;out.unshift(x);p=x.parent;}return out;}
 export function descendants(id:string,all:Item[]):Item[]{return all.filter(i=>ancestry(i,all).some(p=>p.id===id));}
@@ -26,5 +27,5 @@ export function safeUrl(url:unknown){if(typeof url!=='string')return '';try{cons
 
 
 
-export function educationLabel(item:Item,all:Item[]):string {const path=[...ancestry(item,all),item];if(path.some(i=>['octavo','noveno'].includes(i.id)))return 'Educación básica secundaria';if(path.some(i=>['decimo','once'].includes(i.id)))return 'Educación media';if(path.some(i=>i.kind==='branch'))return 'Pregrado';return '';}
+export function educationLabel(item:Item,all:Item[]):string {const path=[...ancestry(item,all),item];if(path.some(i=>['octavo','noveno'].includes(i.id)))return 'Educación básica secundaria';if(path.some(i=>['decimo','once'].includes(i.id)))return 'Educación media';if(path.some(i=>['sub-metabolomica','sub-volatilomica'].includes(i.id)))return 'Posgrado';if(path.some(i=>i.kind==='branch'))return 'Pregrado';return '';}
 
