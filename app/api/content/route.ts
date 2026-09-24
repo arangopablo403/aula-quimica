@@ -10,7 +10,7 @@ export async function POST(req:Request){try{
  let parsed;try{parsed=schema.safeParse(JSON.parse(raw))}catch{return Response.json({error:'Contenido inválido'},{status:400})}
  if(!parsed.success)return Response.json({error:'Revisa el título, tipo y campos del contenido.'},{status:400});
  const item={...parsed.data,id:parsed.data.id||crypto.randomUUID()} as Item;
- if(['decimo','once'].includes(item.id))delete item.parent;
+ if(['octavo','noveno','decimo','once'].includes(item.id))delete item.parent;
  await initialize();const all=await allItems(true);
  const parents:Record<string,string[]>={subbranch:['branch','subbranch'],course:['branch','subbranch'],period:['course'],unit:['course','period'],topic:['unit']};
  if(item.parent){const parent=all.find(i=>i.id===item.parent);if(!parent||!parents[item.kind]?.includes(parent.kind))return Response.json({error:'La ubicación no corresponde al tipo de contenido.'},{status:400});let p:string|undefined=item.parent;const seen=new Set([item.id]);while(p){if(seen.has(p))return Response.json({error:'La ubicación crearía un ciclo.'},{status:400});seen.add(p);p=all.find(i=>i.id===p)?.parent}}
@@ -22,6 +22,7 @@ export async function POST(req:Request){try{
  statements.push(db.prepare('INSERT INTO records(id,kind,status,data,position) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET kind=excluded.kind,status=excluded.status,data=excluded.data,position=excluded.position').bind(item.id,item.kind,item.status,JSON.stringify(item),item.position));
  await db.batch(statements);return Response.json({item});
 }catch(e){console.error(e);return Response.json({error:'No se guardó. Conserva tus cambios e intenta de nuevo.'},{status:503})}}
+
 
 
 
