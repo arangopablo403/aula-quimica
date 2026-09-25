@@ -9,3 +9,15 @@ export const records = sqliteTable('records', {
 export const messages = sqliteTable('messages', {
  id: text('id').primaryKey(), name:text('name').notNull(), email:text('email').notNull(), message:text('message').notNull(), created:text('created').notNull(),
 });
+export const students = sqliteTable('students', {
+ id:text('id').primaryKey(), email:text('email').notNull(), name:text('name').notNull(), institution:text('institution').notNull(), requested:text('requested').notNull(), approved:text('approved').notNull().default('[]'), status:text('status').notNull().default('pending'), created:text('created').notNull(), updated:text('updated').notNull(),
+},t=>[index('students_status_created').on(t.status,t.created)]);
+export const studentAudit = sqliteTable('student_audit', {
+ id:text('id').primaryKey(), student:text('student').notNull(), actor:text('actor').notNull(), action:text('action').notNull(), courses:text('courses').notNull(), created:text('created').notNull(),
+});
+export const loginSessions = sqliteTable('login_sessions', {
+ hash:text('hash').primaryKey(), user:text('user').notNull(), expires:integer('expires').notNull(),
+},t=>[index('login_sessions_expires').on(t.expires)]);
+export const authAttempts = sqliteTable('auth_attempts', {
+ key:text('key').primaryKey(), count:integer('count').notNull(), expires:integer('expires').notNull(),
+},t=>[index('auth_attempts_expires').on(t.expires)]);

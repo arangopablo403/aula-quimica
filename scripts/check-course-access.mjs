@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {createRequire} from 'node:module';
+await build({entryPoints:['lib/course-access.ts'],bundle:true,platform:'node',format:'cjs',outfile:'.sites-runtime/course-access.cjs'});
+const {courseContent}=createRequire(import.meta.url)('../.sites-runtime/course-access.cjs');
+const item=(id,kind,parent,links)=>({id,kind,parent,links,title:id,status:'published',position:0});
+const data=[item('branch','branch'),item('a','course','branch'),item('b','course','branch'),item('ua','unit','a'),item('ub','unit','b'),item('ta','topic','ua'),item('tb','topic','ub'),item('shared','resource',undefined,['ta','tb']),item('only-b','resource',undefined,['tb'])];
+const a=courseContent(data,['a']);
+assert.deepEqual(a.map(i=>i.id),['branch','a','ua','ta','shared']);
+assert.deepEqual(a.find(i=>i.id==='shared').links,['ta']);
+assert.deepEqual(data.find(i=>i.id==='shared').links,['ta','tb'],'Filtering must not mutate source records');
+assert.deepEqual(courseContent(data,[]),[]);
+assert.deepEqual(courseContent(data,['branch']),[],'Only course IDs may authorize access');
+assert.deepEqual(courseContent(data,['missing']),[]);
+assert.ok(courseContent(data,['a','b']).some(i=>i.id==='only-b'));
+console.log('PASS: isolation between courses, shared resources, non-mutating filtering, empty permissions and invalid course IDs.');
+if(process.env.TEST_ORIGIN){const origin=process.env.TEST_ORIGIN;assert.match(origin,/^http:\/\/(localhost|127\.0\.0\.1):\d+$/);const get=(path,opts)=>fetch(origin+path,opts);
+ assert.equal((await get('/api/students')).status,403);
+ assert.equal((await get('/api/content?admin=1')).status,403);
+ assert.deepEqual((await (await get('/api/content')).json()).items,[]);
+ assert.equal((await get('/api/files/unavailable')).status,404);
+ assert.equal((await get('/api/students',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({id:'00000000-0000-4000-8000-000000000001',status:'approved',courses:['decimo']})})).status,403);
+ assert.equal((await get('/api/auth',{method:'POST',headers:{Origin:'https://untrusted.invalid','Content-Type':'application/json'},body:'{"action":"logout"}'})).status,403);
+ console.log('PASS: anonymous data/file access, self-approval and cross-origin requests denied.');
+}
