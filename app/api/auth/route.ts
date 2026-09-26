@@ -1,10 +1,11 @@
+import {enabledProviders} from '@/lib/social-auth';
 import {z} from 'zod';
 import {authClient,authConfigured,authEnv,clearSession,establishSession,isTeacherEmail,managedUser,studentRecord,throttle} from '@/lib/student-auth';
 import {authorized,courseOptions,sameOrigin} from '@/lib/server';
 const credentials=z.object({email:z.string().trim().email().max(254).transform(v=>v.toLowerCase()),password:z.string().min(1).max(128)});
 const application=z.object({name:z.string().trim().min(3).max(150),institution:z.string().trim().min(2).max(150),courses:z.array(z.string().max(120)).min(1).max(25),consent:z.literal(true)});
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
-export async function GET(){try{const teacher=await authorized();const user=await managedUser();return json({configured:authConfigured(),teacher,user:user?{email:user.email}:null,student:user?await studentRecord(user):null,courses:await courseOptions()});}catch{return json({error:'No se pudo consultar el acceso. Intenta de nuevo.'},503);}}
+export async function GET(){try{const teacher=await authorized();const user=await managedUser();return json({configured:authConfigured(),providers:enabledProviders(),teacher,user:user?{email:user.email}:null,student:user?await studentRecord(user):null,courses:await courseOptions()});}catch{return json({error:'No se pudo consultar el acceso. Intenta de nuevo.'},503);}}
 export async function POST(req:Request){try{
  if(!sameOrigin(req))return json({error:'Solicitud no permitida.'},403);
  const raw=await req.text();if(raw.length>12000)return json({error:'Solicitud demasiado extensa.'},413);let body;try{body=JSON.parse(raw);}catch{return json({error:'Solicitud inválida.'},400);}

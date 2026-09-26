@@ -2,7 +2,7 @@ import 'server-only';
 import {env} from 'cloudflare:workers';
 import {cookies} from 'next/headers';
 import {createClient,type User,type Session} from '@supabase/supabase-js';
-export const authEnv=()=>env as unknown as {DB:D1Database;SUPABASE_URL?:string;SUPABASE_PUBLISHABLE_KEY?:string;AUTH_READY?:string;ADMIN_EMAIL?:string;SITE_OWNER_EMAIL?:string;SITE_ORIGIN?:string};
+export const authEnv=()=>env as unknown as {DB:D1Database;SUPABASE_URL?:string;SUPABASE_PUBLISHABLE_KEY?:string;AUTH_READY?:string;ADMIN_EMAIL?:string;SITE_OWNER_EMAIL?:string;OAUTH_PROVIDERS?:string;SITE_ORIGIN?:string};
 export function authConfigured(){const e=authEnv();return !!(e.SUPABASE_URL&&e.SUPABASE_PUBLISHABLE_KEY&&e.AUTH_READY==='true');}
 export function authClient(){const e=authEnv();if(!authConfigured())throw new Error('AUTH_UNAVAILABLE');return createClient(e.SUPABASE_URL!,e.SUPABASE_PUBLISHABLE_KEY!,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});}
 export async function digest(value:string){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))].map(b=>b.toString(16).padStart(2,'0')).join('');}

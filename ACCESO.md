@@ -32,3 +32,15 @@ El docente puede usar la entrada de ChatGPT existente; los correos autorizados s
 - La recuperación automática de contraseñas no está implementada en esta entrega; el formulario indica contactar al docente. Debe añadirse con el proveedor activado, sin pedir ni mostrar la contraseña actual al docente.
 
 Referencias oficiales: https://supabase.com/docs/guides/auth/passwords y https://supabase.com/docs/guides/auth/auth-smtp
+
+## Acceso social preparado
+
+Google (`google`), Microsoft/Hotmail/Outlook (`azure`) y Facebook (`facebook`) usan OAuth con PKCE. `/api/oauth` inicia el flujo con una solicitud POST del mismo origen. `/auth/retorno` verifica el código, el usuario y el correo antes de crear la sesión privada. El verificador PKCE vive diez minutos en cookies HttpOnly; no se guardan tokens de sesión en localStorage.
+
+`OAUTH_PROVIDERS` contiene únicamente proveedores efectivamente configurados y probados, separados por comas. Mientras falten credenciales, sus botones muestran «Pendiente de activación». Registrar las aplicaciones en las consolas oficiales y guardar sus Client ID y secretos en Supabase Auth; nunca en el navegador ni en archivos versionados. Permitir como retorno de Supabase la URL del sitio seguida de `/auth/retorno`. La URL callback de las aplicaciones externas se obtiene del proyecto Supabase elegido.
+
+Microsoft debe admitir cuentas personales para Hotmail/Outlook; revisar la configuración de verificación de correo y la claim opcional `xms_edov` según la guía oficial. Facebook debe contar con los permisos y el estado de aplicación requeridos para usuarios externos. No activar proveedores hasta probarlos.
+
+La entrada docente ya no redirige automáticamente a OpenAI: muestra `/acceso`. Se conserva un enlace alternativo explícito de ChatGPT para la cuenta propietaria.
+
+Guías: https://supabase.com/docs/guides/auth/social-login/auth-google · https://supabase.com/docs/guides/auth/social-login/auth-azure · https://supabase.com/docs/guides/auth/social-login/auth-facebook
