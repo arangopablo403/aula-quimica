@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import NetworkBackground from './network-background';
 
 export const metadata: Metadata = {
   title: "Aula Química | Aprende, explora y conecta",
@@ -20,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased"><NetworkBackground/>{children}</body>
     </html>
   );
 }
