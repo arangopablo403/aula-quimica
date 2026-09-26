@@ -2,7 +2,7 @@
 
 ## Estado de esta entrega
 
-Formularios y control de matrícula implementados. La activación de cuentas externas queda cerrada (`AUTH_READY=false`) hasta elegir el proyecto de Supabase y comprobar correo de confirmación e inicio de sesión. El sitio conserva la audiencia privada de su propietario.
+Formularios y control de matrícula implementados. Proyecto independiente de Supabase: Aula Química (`qjsvgnnpkmnrrpqhwbad`), en la organización compartida con Nexo. Nexo no se modifica. La URL y clave publicable de Aula Química están conectadas en Sites. La activación de cuentas externas queda cerrada (`AUTH_READY=false`) hasta configurar y verificar correo y redirecciones. La entrada de registro puede visitarse sin cuenta; los contenidos requieren sesión propia y autorización.
 
 ## Flujo
 
@@ -16,13 +16,13 @@ Los datos de matrícula y el historial de cambios están en tablas privadas de D
 
 ## Activación pendiente
 
-- Confirmar el proyecto de Supabase. No se ha modificado ningún proyecto existente.
+- Proyecto independiente creado y conectado: `qjsvgnnpkmnrrpqhwbad`. Las identidades de Nexo no sirven para iniciar sesión aquí.
 - Configurar `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` en las variables de Sites y en el entorno local; nunca usar una clave service_role para esta integración.
 - Verificar confirmación de correo habilitada, SMTP de producción y URL del sitio/redirección permitida hacia `/acceso`. El correo predeterminado de Supabase tiene restricciones para destinatarios y no sustituye SMTP para estudiantes.
 - Probar con una cuenta de prueba autorizada: confirmación, login, matrícula pendiente, aprobación, aislamiento entre cursos, suspensión, expiración y cierre de sesión. No activar antes de estas pruebas.
 - Configurar `AUTH_READY=true`, publicar y habilitar la entrada de visitantes en Sites únicamente cuando el control interno esté verificado. La página de acceso será visitable, pero los cursos seguirán protegidos en el servidor.
 
-El docente puede usar la entrada de ChatGPT existente; los correos autorizados se guardan en `ADMIN_EMAIL` y `SITE_OWNER_EMAIL`. No hay registro público de docentes ni selector de rol que conceda permisos. Cuando se active Supabase, esos mismos correos verificados podrán utilizar el formulario de contraseña.
+La sesión de ChatGPT no concede acceso docente. Los correos docentes autorizados se guardan en `ADMIN_EMAIL` y `SITE_OWNER_EMAIL`. No hay registro público de docentes ni selector de rol que conceda permisos. Cuando se active Supabase, esos mismos correos verificados podrán utilizar el formulario de contraseña.
 
 ## Verificación realizada
 
@@ -41,6 +41,6 @@ Google (`google`), Microsoft/Hotmail/Outlook (`azure`) y Facebook (`facebook`) u
 
 Microsoft debe admitir cuentas personales para Hotmail/Outlook; revisar la configuración de verificación de correo y la claim opcional `xms_edov` según la guía oficial. Facebook debe contar con los permisos y el estado de aplicación requeridos para usuarios externos. No activar proveedores hasta probarlos.
 
-La entrada docente ya no redirige automáticamente a OpenAI: muestra `/acceso`. Se conserva un enlace alternativo explícito de ChatGPT para la cuenta propietaria.
+La entrada docente ya no redirige automáticamente a OpenAI: muestra `/acceso`. Se ha eliminado la autorización automática por ChatGPT, también para APIs y archivos.
 
 Guías: https://supabase.com/docs/guides/auth/social-login/auth-google · https://supabase.com/docs/guides/auth/social-login/auth-azure · https://supabase.com/docs/guides/auth/social-login/auth-facebook
