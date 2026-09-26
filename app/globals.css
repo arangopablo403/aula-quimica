@@ -18,6 +18,7 @@
 @media(max-width:700px){.annual-plan,.research-overview{padding:20px}.research-types,.research-grid{grid-template-columns:1fr}.research-types button{padding:13px 18px}.research-heading{gap:13px}.research-heading h2{font-size:1.5rem}.annual-top h2{font-size:1.3rem}.annual-grid>section{padding:16px}}
 body{isolation:isolate}
 .network-background{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.main-nav{flex-wrap:wrap;justify-content:flex-start;column-gap:24px;row-gap:0}.main-nav a{white-space:nowrap}
 .university-catalog{margin-top:64px}.level-navigation{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 36px}.level-navigation a{padding:10px 16px;border:1px solid var(--line,#dce6e5);border-radius:8px;color:var(--green,#08736e);font-weight:600}.university-catalog .branch-card{min-height:240px}
 
 /* Color roles: blue for navigation, green for actions, pale surfaces for grouping. */

@@ -14,7 +14,7 @@ export async function POST(req:Request){try{
  await initialize();const all=await allItems(true);
  const parents:Record<string,string[]>={subbranch:['branch','subbranch'],course:['branch','subbranch'],period:['course'],unit:['course','period'],topic:['unit']};
  if(item.parent){const parent=all.find(i=>i.id===item.parent);if(!parent||!parents[item.kind]?.includes(parent.kind))return Response.json({error:'La ubicación no corresponde al tipo de contenido.'},{status:400});let p:string|undefined=item.parent;const seen=new Set([item.id]);while(p){if(seen.has(p))return Response.json({error:'La ubicación crearía un ciclo.'},{status:400});seen.add(p);p=all.find(i=>i.id===p)?.parent}}
- if(item.links?.some(id=>!all.some(i=>i.id===id&&i.kind==='topic')))return Response.json({error:'Uno de los temas vinculados ya no está disponible.'},{status:400});
+ if(item.links?.some(id=>!all.some(i=>i.id===id&&['branch','subbranch','course','period','unit','topic'].includes(i.kind))))return Response.json({error:'Uno de los espacios vinculados ya no está disponible.'},{status:400});
  for(const key of ['file','image','plan']){const value=item[key];if(typeof value==='string'&&value&&!/^\/api\/files\/[\w-]+$/.test(value)&&!/^https:\/\//.test(value))return Response.json({error:'El enlace del archivo no es válido.'},{status:400})}
  item.updatedAt=new Date().toISOString(); const db=bindings().DB;
  const statements=[];
