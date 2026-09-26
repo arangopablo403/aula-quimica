@@ -18,9 +18,6 @@
 @media(max-width:700px){.annual-plan,.research-overview{padding:20px}.research-types,.research-grid{grid-template-columns:1fr}.research-types button{padding:13px 18px}.research-heading{gap:13px}.research-heading h2{font-size:1.5rem}.annual-top h2{font-size:1.3rem}.annual-grid>section{padding:16px}}
 body{isolation:isolate}
 .network-background{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
-.network-toggle{position:fixed;bottom:12px;left:12px;z-index:30;padding:6px 12px;border:1px solid #c5d7de;border-radius:20px;background:#ffffffed;color:#234b60;font-size:.75rem;box-shadow:0 2px 8px #123b4d0d}
-.network-toggle:focus-visible{outline:3px solid #07847b;outline-offset:3px}
-@media(prefers-reduced-motion:reduce){.network-toggle{display:none}}
 .university-catalog{margin-top:64px}.level-navigation{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 36px}.level-navigation a{padding:10px 16px;border:1px solid var(--line,#dce6e5);border-radius:8px;color:var(--green,#08736e);font-weight:600}.university-catalog .branch-card{min-height:240px}
 
 /* Color roles: blue for navigation, green for actions, pale surfaces for grouping. */
