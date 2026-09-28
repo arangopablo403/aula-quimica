@@ -55,6 +55,8 @@ export const cvResearch:Item[]=[
 export function completeCvProfile(item:Item):Item{
  if(item.kind!=='profile')return item;
  const result={...item};
+ // Apply the requested profile image once; subsequent editor saves retain this revision.
+ if(result.profileImageRevision!=='2026-09-28'){result.image='/perfil-ilustrado.png';result.profileImageRevision='2026-09-28';}
  for(const [key,value] of Object.entries(cvProfile)){
   if(!result[key]||(typeof result[key]==='string'&&(/pendiente|se actualizará con la trayectoria/i.test(result[key] as string)))) result[key]=value;
  }
