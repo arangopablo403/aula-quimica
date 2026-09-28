@@ -1,3 +1,4 @@
+import {branchLearningContent} from './branch-learning';
 import 'server-only';
 import type {Item} from './content';
 import {naturalScienceContent} from './school';
@@ -19,4 +20,4 @@ const baseSeed:Item[]=[
  make('saber-dilucion','topic','Interpreta una dilución',{parent:'saber',example:true,body:'A una solución se le añade agua sin pérdida de soluto. ¿Qué sucede con la concentración?\n\nA. Aumenta.\nB. Disminuye.\nC. Permanece igual.\nD. Se duplica.',examples:'Respuesta explicada: B. La cantidad de soluto se mantiene y el volumen aumenta. Como c = n/V, la concentración disminuye.\n\nEjercicio de aplicación: si el volumen final es el doble del inicial, la concentración final es la mitad. Este es un ejemplo didáctico, no una pregunta oficial.'}),
  make('perfil','profile','Sobre mí',{name:'Juan Pablo Betancourt Arango',description:'Docente e investigador en química. Este perfil se actualizará con la trayectoria, formación y proyectos que el autor decida publicar.',education:'',interests:'',projects:'',email:'juan.betancourt@ucaldas.edu.co',scholar:'https://scholar.google.com/citations?user=h-mLw2sAAAAJ&hl=es',orcid:'https://orcid.org/0000-0003-0409-5900',researchgate:'https://www.researchgate.net/profile/Juan-Betancourt-Arango-2?ev=hdr_xprf',social:''}),
 ];
-export const seed:Item[]=expandDegreePlan([...new Map([...baseSeed,...universityContent,...naturalScienceContent,...annualContent.map(i=>({...baseSeed.find(b=>b.id===i.id),...i}))].map(i=>[i.id,i])).values()]);
+export const seed:Item[]=expandDegreePlan([...new Map([...baseSeed,...branchLearningContent,...universityContent,...naturalScienceContent,...annualContent.map(i=>({...baseSeed.find(b=>b.id===i.id),...i}))].map(i=>[i.id,i])).values()]);
