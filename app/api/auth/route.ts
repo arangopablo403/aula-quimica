@@ -18,7 +18,8 @@ export async function POST(req:Request){try{
   const client=authClient();
   if(action==='register'){const result=await client.auth.signUp({email,password,options:{emailRedirectTo:authEnv().SITE_ORIGIN+'/acceso'}});if(result.error)return json({error:'No se pudo completar el registro. Revisa el correo o inténtalo más tarde.'},400);return json({message:'Revisa tu correo para confirmar la cuenta. Después inicia sesión y completa la solicitud de matrícula.'});}
   const result=await client.auth.signInWithPassword({email,password});if(result.error||!result.data.session||!result.data.user?.email_confirmed_at)return json({error:'No se pudo iniciar sesión. Revisa tus datos y confirma tu correo.'},401);
-  await establishSession(result.data.session,new URL(req.url).protocol==='https:');return json({redirect:isTeacherEmail(result.data.user.email)?'/admin':'/acceso'});
+  if(body.role==='teacher'&&!isTeacherEmail(result.data.user.email))return json({error:'Esta cuenta no tiene autorización docente. Selecciona Estudiante o solicita autorización al administrador.'},403);
+  await establishSession(result.data.session,new URL(req.url).protocol==='https:');return json({redirect:body.role==='student'?'/':isTeacherEmail(result.data.user.email)?'/admin':'/'});
  }
  const user=await managedUser();if(!user)return json({error:'Tu sesión terminó. Inicia sesión de nuevo.'},401);
  if(action==='apply'){
