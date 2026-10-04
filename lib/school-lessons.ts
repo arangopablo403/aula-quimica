@@ -12,10 +12,12 @@ export function enrichSchoolLessons(items: Item[]): Item[] {
  for(const [slug,lesson] of Object.entries(review))notes.set('saber-'+slug,lesson);
  for(const [grade,lessons] of Object.entries(scienceLessons)) lessons.forEach((lesson,n)=>notes.set(`${grade}-p${Math.floor(n/8)+1}-u${Math.floor(n%8/4)+1}-t${n%4+1}`,lesson));
  for(const [grade,lessons] of Object.entries(chemistryLessons)) for(const [slug,lesson] of Object.entries(lessons)) notes.set(['materia','concentracion'].includes(slug)?slug:`${grade}-${slug}`,lesson);
+ const byId=new Map(items.map(item=>[item.id,item]));
  return items.map(topic=>{
   const lesson=notes.get(topic.id);
   if(topic.kind!=='topic'||!lesson||topic.updatedAt) return topic;
-  const grade=ancestry(topic,items).find(p=>['octavo','noveno','decimo','once'].includes(p.id));
+  let grade:Item|undefined=topic;const seen=new Set<string>();
+  while(grade&&!['octavo','noveno','decimo','once'].includes(grade.id)){if(seen.has(grade.id)){grade=undefined;break;}seen.add(grade.id);grade=grade.parent?byId.get(grade.parent):undefined;}
   if(!grade)return topic;
   const readings=['Ministerio de Educación Nacional · Derechos Básicos de Aprendizaje de Ciencias Naturales\nhttps://www.colombiaaprende.edu.co/sites/default/files/files_public/2022-06/DBA_C.Naturales-min.pdf'];
   if(['decimo','once'].includes(grade.id)||/quím|enlace|gas|soluci|concentraci|ácido/i.test(topic.title)) readings.push('OpenStax · Química 2ed (español)\nhttps://openstax.org/books/qu%C3%ADmica-2ed/pages/1-introduccion');
