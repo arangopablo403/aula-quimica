@@ -29,6 +29,14 @@ const preserved=mergeContent([edited],seed).find(item=>item.id===edited.id);
 assert.equal(preserved.body,edited.body);assert.equal(preserved.examples,'');assert.equal(preserved.bibliography,edited.bibliography);
 const legacy={...seed.find(item=>item.id===original.id),body:'Tema pendiente',example:true};
 assert.ok(mergeContent([legacy],seed).find(item=>item.id===original.id).body.includes('Resumen del tema'));
-assert.equal(presentationTopic(items,'materia'),undefined,'School topic incorrectly reclassified');
+assert.ok(presentationTopic(items,'materia'),'School presentations enabled');
+for(const grade of ['octavo','noveno','decimo','once']) {
+ const topics=items.filter(i=>i.kind==='topic'&&ancestry(i,items).some(p=>p.id===grade));
+ for(const topic of topics){assert.ok(presentationTopic(items,topic.id));if(topic.id!=='saber-dilucion')assert.ok(topic.body?.startsWith('Resumen del tema'),'Missing school summary '+topic.id);}
+ const editedSchool={...topics[0],updatedAt:'2026-10-04T12:00:00Z',body:'Mi explicación',examples:''};
+ const savedSchool=mergeContent([editedSchool],seed).find(i=>i.id===editedSchool.id);
+ assert.equal(savedSchool.body,editedSchool.body);assert.equal(savedSchool.examples,'');
+ console.log(grade+': '+topics.length+' topics');
+}
 console.log(`PASS: ${expected} new topic summaries; ${university.length} university topics with presentation slots and developed text; teacher edits preserved.`);
 console.log(Object.entries(courseNotes).map(([slug,c])=>slug+': '+c.lessons.length).join('\n'));
