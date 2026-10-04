@@ -10,6 +10,7 @@ export async function POST(req:Request){try{
  let parsed;try{parsed=schema.safeParse(JSON.parse(raw))}catch{return Response.json({error:'Contenido inválido'},{status:400})}
  if(!parsed.success)return Response.json({error:'Revisa el título, tipo y campos del contenido.'},{status:400});
  const item={...parsed.data,id:parsed.data.id||crypto.randomUUID()} as Item;
+ if(item.kind==='resource'&&item.status==='published'&&!item.file&&!item.url&&!item.body?.trim())return Response.json({error:'Adjunta un archivo, añade un enlace o escribe el contenido antes de publicar.'},{status:400});
  if(['octavo','noveno','decimo','once'].includes(item.id))delete item.parent;
  await initialize();const all=await allItems(true);
  const parents:Record<string,string[]>={subbranch:['branch','subbranch'],course:['branch','subbranch'],period:['course'],unit:['course','period'],topic:['unit']};
