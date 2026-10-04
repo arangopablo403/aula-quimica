@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+import {createRequire} from 'node:module';
+const state=new Map();let calls=0,ok=true;
+globalThis.__mailEnv={SITE_ORIGIN:'https://chemquantum.win',ADMIN_EMAIL:'teacher@example.test',DB:{prepare(sql){let args=[];return {bind(...values){args=values;return this;},async run(){if(sql.startsWith('INSERT')){if(!state.has(args[0]))state.set(args[0],{sent:null});}if(sql.includes('SET sent='))state.get(args[1]).sent=args[0];if(sql.includes('SET error='))state.get(args[1]).error=args[0];},async first(){return state.get(args[0])?.sent?{student:args[0]}:null;}};}}};
+globalThis.fetch=async (url,options)=>{calls++;assert.equal(url,'https://api.resend.com/emails');const body=JSON.parse(options.body);assert.deepEqual(body.to,['teacher@example.test']);assert.match(body.text,/Química 10/);assert.match(body.text,/https:\/\/chemquantum.win\/admin\/estudiantes/);return new Response('{}',{status:ok?200:503});};
+await build({entryPoints:['lib/enrollment-mail.ts'],bundle:true,platform:'node',format:'cjs',outfile:'.sites-runtime/enrollment-mail.cjs',plugins:[{name:'mock-bindings',setup(b){b.onResolve({filter:/^(server-only|cloudflare:workers|\.\/student-auth)$/},a=>({path:a.path,namespace:'mock'}));b.onLoad({filter:/.*/,namespace:'mock'},a=>({contents:a.path==='server-only'?'':a.path==='cloudflare:workers'?'export const env=globalThis.__mailEnv;':'export const authEnv=()=>globalThis.__mailEnv;'}));}}]});
+const {sendEnrollmentAlert}=createRequire(import.meta.url)('../.sites-runtime/enrollment-mail.cjs');
+const student={id:'test1',name:'Estudiante',email:'student@example.test',institution:'Colegio',requested:'["decimo"]'};
+const courses=[{id:'decimo',title:'Química 10'}];
+assert.equal(await sendEnrollmentAlert(student,courses),false);assert.equal(calls,0);
+Object.assign(globalThis.__mailEnv,{RESEND_API_KEY:'fake-test-key',ENROLLMENT_MAIL_FROM:'sender@example.test'});
+ok=false;assert.equal(await sendEnrollmentAlert(student,courses),false);assert.equal(state.get('test1').sent,null);
+ok=true;assert.equal(await sendEnrollmentAlert(student,courses),true);assert.ok(state.get('test1').sent);
+assert.equal(await sendEnrollmentAlert(student,courses),true);assert.equal(calls,2,'Accepted notifications must not be sent again');
+console.log('PASS: missing config, provider failure, retry, recipient, panel link and duplicate prevention (mocked; no email sent).');

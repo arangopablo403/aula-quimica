@@ -1,9 +1,10 @@
+import {sendEnrollmentAlert} from '@/lib/enrollment-mail';
 import {enabledProviders} from '@/lib/social-auth';
 import {z} from 'zod';
 import {authClient,authConfigured,authEnv,clearSession,establishSession,isTeacherEmail,managedUser,studentRecord,throttle} from '@/lib/student-auth';
 import {authorized,courseOptions,sameOrigin} from '@/lib/server';
 const credentials=z.object({email:z.string().trim().email().max(254).transform(v=>v.toLowerCase()),password:z.string().min(1).max(128)});
-const application=z.object({name:z.string().trim().min(3).max(150),institution:z.string().trim().min(2).max(150),courses:z.array(z.string().max(120)).min(1).max(25),consent:z.literal(true)});
+const application=z.object({name:z.string().trim().min(3).max(150),institution:z.string().trim().min(2).max(150),courses:z.array(z.string().max(120)).min(1).max(1),consent:z.literal(true)});
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 export async function GET(){try{const teacher=await authorized();const user=await managedUser();return json({configured:authConfigured(),providers:enabledProviders(),teacher,user:user?{email:user.email}:null,student:user?await studentRecord(user):null,courses:await courseOptions()});}catch{return json({error:'No se pudo consultar el acceso. Intenta de nuevo.'},503);}}
 export async function POST(req:Request){try{
@@ -26,7 +27,7 @@ export async function POST(req:Request){try{
   const parsed=application.safeParse(body);if(!parsed.success)return json({error:'Completa nombre, institución, cursos y autorización de uso de datos.'},400);
   const courses=await courseOptions();const selected=[...new Set(parsed.data.courses)];if(selected.some(id=>!courses.some(c=>c.id===id)))return json({error:'Selecciona cursos disponibles.'},400);
   if(await studentRecord(user))return json({error:'Ya tienes una solicitud. El docente puede actualizar tus cursos desde su panel.'},409);
-  const now=new Date().toISOString();await authEnv().DB.prepare('INSERT INTO students(id,email,name,institution,requested,approved,status,created,updated) VALUES(?,?,?,?,?,?,?,?,?)').bind(user.id,user.email!,parsed.data.name,parsed.data.institution,JSON.stringify(selected),'[]','pending',now,now).run();return json({message:'Solicitud guardada. El docente debe aprobar tus cursos antes de que puedas entrar.'});
+  const now=new Date().toISOString();await authEnv().DB.prepare('INSERT INTO students(id,email,name,institution,requested,approved,status,created,updated) VALUES(?,?,?,?,?,?,?,?,?)').bind(user.id,user.email!,parsed.data.name,parsed.data.institution,JSON.stringify(selected),'[]','pending',now,now).run();const student=await studentRecord(user);if(student)try{await sendEnrollmentAlert(student,courses);}catch{console.error('Enrollment alert could not be recorded');}return json({message:'Solicitud guardada. Solo tendrás acceso al curso que el docente autorice.'});
  }
  return json({error:'Acción no disponible.'},400);
  }catch{return json({error:'No se pudo completar la solicitud. Tus datos guardados se conservan.'},503);}}
