@@ -1,6 +1,7 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
 import type {Presentation} from '@/lib/presentations';
+import {presentationPdf} from '@/lib/convert-presentation';
 
 export default function TopicPresentations({topic, title}: {topic: string; title: string}) {
   const [items, setItems] = useState<Presentation[]>([]);
@@ -23,7 +24,7 @@ export default function TopicPresentations({topic, title}: {topic: string; title
     event.preventDefault();
     const file = input.current?.files?.[0];
     if (!file || !name.trim()) return;
-    if (file.size > 40 * 1024 * 1024) {setMessage('El PDF debe pesar menos de 40 MB.'); return;}
+    if (file.size > 40 * 1024 * 1024) {setMessage('La presentación debe pesar menos de 40 MB.'); return;}
     setBusy(true);
     let loading: import('pdfjs-dist').PDFDocumentLoadingTask | undefined;
     try {
@@ -31,7 +32,7 @@ export default function TopicPresentations({topic, title}: {topic: string; title
       const pdf = await import('pdfjs-dist');
       const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
       pdf.GlobalWorkerOptions.workerSrc = worker.default;
-      loading = pdf.getDocument({data: await file.arrayBuffer()});
+      loading = pdf.getDocument({data: await presentationPdf(file,topic,setMessage)});
       const document = await loading.promise;
       if (document.numPages > 80) throw new Error('Divide la presentación en archivos de máximo 80 diapositivas.');
       const form = new FormData(); form.set('topic', topic); form.set('title', name.trim());
@@ -59,7 +60,7 @@ export default function TopicPresentations({topic, title}: {topic: string; title
       const response = await fetch('/api/presentations', {method: 'POST', body: form});
       const data = await response.json() as {error?: string; presentation: Presentation}; if (!response.ok) throw new Error(data.error);
       setItems(current => [...current, data.presentation]); setName(''); if (input.current) input.current.value = '';
-      setMessage('Presentación publicada en este tema. El documento original no se ha subido.');
+      setMessage('Presentación publicada en este tema. Los estudiantes verán las diapositivas con marca de agua, sin acceso al archivo original.');
     } catch (error) {setMessage(error instanceof Error ? error.message : 'No se pudo publicar.');}
     finally {await loading?.destroy(); setBusy(false);}
   }
@@ -72,9 +73,10 @@ export default function TopicPresentations({topic, title}: {topic: string; title
       try {const response = await fetch(endpoint + '&presentation=' + item.id, {method: 'DELETE'}); const data = await response.json() as {error?: string}; if (!response.ok) throw new Error(data.error); setItems(current => current.filter(value => value.id !== item.id)); setMessage('Presentación eliminada.');}
       catch (error) {setMessage(error instanceof Error ? error.message : 'No se pudo eliminar.');} finally {setBusy(false);}
     }}>Eliminar presentación</button>}</div>)}
-    {teacher && <form onSubmit={upload}><h3>Subir presentación a este tema</h3><p>PDF, hasta 80 diapositivas y 40 MB. Desde PowerPoint, exporta a PDF. Se muestran diapositivas estáticas, sin animaciones ni audio.</p>
+    {teacher && <form onSubmit={upload}><h3>Subir presentación a este tema</h3><p>PDF, PPT, PPTX, PPS, PPSX u ODP, hasta 80 diapositivas y 40 MB. Se muestran diapositivas estáticas, sin animaciones ni audio. Para Keynote, Canva o Google Slides, exporta a PDF o PPTX.</p>
       <label>Título de la presentación<input value={name} onChange={event => setName(event.target.value)} maxLength={250} required disabled={busy}/></label>
-      <label>Presentación PDF<input ref={input} type="file" accept="application/pdf,.pdf" required disabled={busy}/></label>
+      <label>Archivo de presentación<input ref={input} type="file" accept=".pdf,.ppt,.pptx,.pps,.ppsx,.odp" required disabled={busy}/></label>
+      <p>PowerPoint y ODP se envían a CloudConvert para convertirlos. Requiere que el administrador configure el servicio y tenga créditos disponibles. Los PDF se preparan en tu navegador.</p>
       <p>Se publicarán imágenes con marca de agua, sin el archivo original. Las capturas de pantalla no pueden bloquearse completamente.</p>
       <button className="button" disabled={busy}>{busy ? 'Preparando…' : 'Publicar presentación en este tema'}</button>
     </form>}

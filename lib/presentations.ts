@@ -2,7 +2,7 @@ import {ancestry, type Item} from './content';
 
 export function presentationTopic(items: Item[], id: string) {
   const topic = items.find(item => item.id === id && item.kind === 'topic');
-  return topic && ancestry(topic, items).some(item => item.kind === 'branch' || ['octavo', 'noveno', 'decimo', 'once'].includes(item.id)) ? topic : undefined;
+  return topic && ancestry(topic, items).some(item => item.kind === 'course' || item.kind === 'branch') ? topic : undefined;
 }
 
 export type Presentation = {id: string; title: string; pages: number};
