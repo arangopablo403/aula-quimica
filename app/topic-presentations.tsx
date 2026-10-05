@@ -66,6 +66,7 @@ export default function TopicPresentations({topic, title}: {topic: string; title
   }
   return <section className="text-section topic-presentations" aria-label={'Presentaciones de ' + title}>
     <h2>Presentaciones del tema</h2><p>{title}</p>
+    {teacher&&<p><a className="button secondary" href={'/admin?recurso='+encodeURIComponent(topic)}>Añadir video, modelo 3D u otro recurso</a></p>}
     {!items.length && <p className="notice">Este tema tiene su propio espacio de presentaciones. El docente publicará aquí sus diapositivas.</p>}
     {items.map(item => <div key={item.id}><SlideViewer item={item} endpoint={endpoint}/>{teacher && <button className="button secondary" disabled={busy} onClick={async () => {
       if (!confirm('¿Eliminar «' + item.title + '» de este tema?')) return;
