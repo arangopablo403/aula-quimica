@@ -17,7 +17,9 @@ export async function presentationPdf(file:File,topic:string,status:(text:string
    const result=await read(await fetch(endpoint,{cache:'no-store'}));
    if(result.status==='error')throw Error('La conversión falló. Comprueba que el archivo abre correctamente o expórtalo a PDF.');
    if(result.status==='finished'){
-    const response=await fetch(endpoint+'&pdf=1',{cache:'no-store'});if(!response.ok)throw Error('No se pudo recuperar el PDF convertido.');
+    const response=await fetch(endpoint+'&pdf=1',{cache:'no-store'});
+    if(!response.ok){if(response.headers.get('content-type')?.includes('application/json'))await read(response);throw Error('No se pudo recuperar el PDF convertido. El servidor no está disponible temporalmente.');}
+    if(!response.headers.get('content-type')?.includes('application/pdf'))throw Error('El servicio no entregó un PDF válido.');
     const reader=response.body?.getReader();if(!reader)throw Error('El PDF convertido está vacío.');const chunks:Uint8Array[]=[];let size=0;
     while(true){const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>40*1024*1024){await reader.cancel();throw Error('El PDF convertido supera 40 MB. Divide la presentación.');}chunks.push(next.value);}
     const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}return bytes.buffer;

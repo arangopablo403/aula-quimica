@@ -17,4 +17,17 @@ assert.equal(calls,0);
 globalThis.conversionEnv.CLOUDCONVERT_API_KEY='test-only';
 const response=await api.POST(request());assert.equal(response.status,200);const text=await response.text();assert.ok(!text.includes('test-only'));assert.ok(text.includes('upload.cloudconvert.com'));
 assert.equal(calls,1);
+let downloadCalls=0,unsafe=false;
+globalThis.fetch=async(url,options)=>{
+ if(String(url).startsWith('https://api.cloudconvert.com/'))return Response.json({data:{id:'1234567890',tag:'aula-presentation:topic',status:'finished',tasks:[{name:'output',result:{files:[{url:'https://storage.cloudconvert.com/start'}]}}]}});
+ assert.equal(options.headers,undefined,'Never forward API credentials to file storage');
+ downloadCalls++;
+ if(String(url).endsWith('/start'))return new Response(null,{status:302,headers:{location:unsafe?'https://example.invalid/file':'https://storage.cloudconvert.com/file'}});
+ assert.equal(String(url),'https://storage.cloudconvert.com/file');
+ return new Response('%PDF-1.7 test',{headers:{'Content-Type':'application/pdf'}});
+};
+const pdfRequest=()=>new Request('https://school.test/api/presentation-convert?id=1234567890&pdf=1');
+const pdf=await api.GET(pdfRequest());assert.equal(pdf.status,200);assert.equal(await pdf.text(),'%PDF-1.7 test');assert.equal(downloadCalls,2);
+unsafe=true;downloadCalls=0;assert.equal((await api.GET(pdfRequest())).status,503);assert.equal(downloadCalls,1,'Untrusted redirect must not be fetched');
 console.log('PASS: conversion is teacher-only and same-origin; formats validated; missing secret handled; API key never returned.');
+console.log('PASS: PDF redirects handled; external destinations blocked; credentials not forwarded.');

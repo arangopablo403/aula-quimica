@@ -31,8 +31,17 @@ export async function GET(req:Request){try{
  if(job.status!=='finished')return json({error:'La conversión aún no terminó.'},409);
  const address=job.tasks.find(t=>t.name==='output')?.result?.files?.[0]?.url;
  if(!address)throw Error('No se recibió el PDF convertido.');
- const url=new URL(address);if(url.protocol!=='https:'||!url.hostname.endsWith('.cloudconvert.com'))throw Error('Destino de conversión inválido.');
- const result=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(30000)});
+ let url=new URL(address);let result:Response|undefined;
+ const signal=AbortSignal.timeout(30000);
+ for(let hop=0;hop<4;hop++){
+  if(url.protocol!=='https:'||url.username||url.password||!url.hostname.endsWith('.cloudconvert.com'))throw Error('Destino de conversión no autorizado.');
+  result=await fetch(url,{redirect:'manual',signal});
+  if(![301,302,303,307,308].includes(result.status))break;
+  const location=result.headers.get('location');await result.body?.cancel();
+  if(!location||hop===3)throw Error('La descarga del PDF contiene demasiadas redirecciones.');
+  url=new URL(location,url);
+ }
+ if(!result)throw Error('No se pudo iniciar la descarga del PDF.');
  if(!result.ok||Number(result.headers.get('content-length'))>40*1024*1024)throw Error('El PDF convertido no está disponible o supera 40 MB.');
  return new Response(result.body,{headers:{...headers,'Content-Type':'application/pdf','X-Content-Type-Options':'nosniff'}});
  }catch(e){return json({error:e instanceof Error?e.message:'No se pudo consultar la conversión.'},503);}}
