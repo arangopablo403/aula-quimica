@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const compiled=await build({entryPoints:['lib/reactome-display.ts'],bundle:true,write:false,format:'esm'});
+const {entityLabel,equationName,glycolysisSteps,stepInfo}=await import('data:text/javascript;base64,'+Buffer.from(compiled.outputFiles[0].text).toString('base64'));
+assert.deepEqual(entityLabel({displayName:'G6P [cytosol]'}),{label:'Glucosa-6-fosfato',original:'G6P',compartment:'Citosol'});
+assert.equal(entityLabel({displayName:'Uncharacterised entity [mitochondrial matrix]'}).label,'Uncharacterised entity');
+assert.equal(entityLabel({displayName:'Uncharacterised entity [mitochondrial matrix]'}).compartment,'mitochondrial matrix');
+assert.equal(stepInfo('R-MMU-70420'),undefined,'Human annotations must not silently apply to another species');
+assert.equal(new Set(glycolysisSteps.map(s=>s[0])).size,10);
+assert.equal(equationName({displayName:'Example',name:['Example','A <=> B']}),'A <=> B');
+assert.equal(equationName({displayName:'Example',input:[{displayName:'A'}],output:[{displayName:'B'}]}),undefined,'Do not invent a balanced equation from participants');
+console.log('PASS: Spanish labels, original-name fallback, species-specific annotations, and original equation preservation.');
