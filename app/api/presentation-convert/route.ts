@@ -16,7 +16,7 @@ export async function POST(req:Request){try{
  if(!sameOrigin(req)||!await authorized())return json({error:'Acceso restringido.'},403);
  const raw=await req.text();if(raw.length>2000)return json({error:'Solicitud demasiado extensa.'},413);
  const {topic,filename,size}=JSON.parse(raw);const extension=String(filename).split('.').pop()?.toLowerCase();
- if(!['ppt','pptx','pps','ppsx','odp'].includes(extension||'')||!Number.isFinite(size)||size<=0||size>40*1024*1024)return json({error:'Usa PPT, PPTX, PPS, PPSX u ODP de hasta 40 MB.'},400);
+ if(!['ppt','pptx','pps','ppsx','odp'].includes(extension||'')||!Number.isFinite(size)||size<=0||size>200*1024*1024)return json({error:'Usa PPT, PPTX, PPS, PPSX u ODP de hasta 200 MB.'},400);
  if(!presentationTopic(await allItems(true),topic))return json({error:'Tema no disponible.'},404);
  const job=await api('',{method:'POST',body:JSON.stringify({tag:'aula-presentation:'+topic,tasks:{upload:{operation:'import/upload'},convert:{operation:'convert',input:'upload',input_format:extension,output_format:'pdf',timeout:300},output:{operation:'export/url',input:'convert'}}})});
  const form=job?.tasks.find(t=>t.name==='upload')?.result?.form;
@@ -32,7 +32,7 @@ export async function GET(req:Request){try{
  const address=job.tasks.find(t=>t.name==='output')?.result?.files?.[0]?.url;
  if(!address)throw Error('No se recibió el PDF convertido.');
  let url=new URL(address);let result:Response|undefined;
- const signal=AbortSignal.timeout(30000);
+ const signal=AbortSignal.timeout(300000);
  for(let hop=0;hop<4;hop++){
   if(url.protocol!=='https:'||url.username||url.password||!url.hostname.endsWith('.cloudconvert.com'))throw Error('Destino de conversión no autorizado.');
   result=await fetch(url,{redirect:'manual',signal});
@@ -42,7 +42,7 @@ export async function GET(req:Request){try{
   url=new URL(location,url);
  }
  if(!result)throw Error('No se pudo iniciar la descarga del PDF.');
- if(!result.ok||Number(result.headers.get('content-length'))>40*1024*1024)throw Error('El PDF convertido no está disponible o supera 40 MB.');
+ if(!result.ok||Number(result.headers.get('content-length'))>200*1024*1024)throw Error('El PDF convertido no está disponible o supera 200 MB.');
  return new Response(result.body,{headers:{...headers,'Content-Type':'application/pdf','X-Content-Type-Options':'nosniff'}});
  }catch(e){return json({error:e instanceof Error?e.message:'No se pudo consultar la conversión.'},503);}}
 export async function DELETE(req:Request){try{

@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {Presentation} from '@/lib/presentations';
 import {presentationPdf} from '@/lib/convert-presentation';
 
-export default function TopicPresentations({topic, title}: {topic: string; title: string}) {
+export default function TopicPresentations({topic, title, weekly=false}: {topic: string; title: string; weekly?: boolean}) {
   const [items, setItems] = useState<Presentation[]>([]);
   const [teacher, setTeacher] = useState(false);
   const [message, setMessage] = useState('Cargando presentaciones…');
@@ -24,8 +24,11 @@ export default function TopicPresentations({topic, title}: {topic: string; title
     event.preventDefault();
     const file = input.current?.files?.[0];
     if (!file || !name.trim()) return;
-    if (file.size > 40 * 1024 * 1024) {setMessage('La presentación debe pesar menos de 40 MB.'); return;}
+    const maxMB=200;
+    if(file.size>maxMB*1024*1024){setMessage(`El archivo supera ${maxMB} MB. Exporta a PDF o divide el archivo.`);return;}
     setBusy(true);
+    let uploadId: string | undefined;
+    async function request(url:string, options:RequestInit){const response=await fetch(url,options);if(!response.headers.get('content-type')?.includes('application/json'))throw Error('El servicio no respondió correctamente. Intenta de nuevo.');const result=await response.json() as {error?:string;id:string;presentation:Presentation};if(!response.ok)throw Error(result.error||'No se pudo completar la carga.');return result;}
     let loading: import('pdfjs-dist').PDFDocumentLoadingTask | undefined;
     try {
       setMessage('Preparando las diapositivas. Mantén esta página abierta.');
@@ -34,9 +37,9 @@ export default function TopicPresentations({topic, title}: {topic: string; title
       pdf.GlobalWorkerOptions.workerSrc = worker.default;
       loading = pdf.getDocument({data: await presentationPdf(file,topic,setMessage)});
       const document = await loading.promise;
-      if (document.numPages > 80) throw new Error('Divide la presentación en archivos de máximo 80 diapositivas.');
-      const form = new FormData(); form.set('topic', topic); form.set('title', name.trim());
-      let bytes = 0;
+      if(document.numPages>1000)throw Error('Usa archivos de hasta 1000 diapositivas.');
+      const started=await request('/api/presentation-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,title:name.trim(),pages:document.numPages})});
+      uploadId=started.id;
       for (let n = 1; n <= document.numPages; n++) {
         setMessage(`Preparando diapositiva ${n} de ${document.numPages}…`);
         const page = await document.getPage(n);
@@ -52,34 +55,34 @@ export default function TopicPresentations({topic, title}: {topic: string; title
         for (const y of [-canvas.height / 3, 0, canvas.height / 3]) context.fillText('AulaQuímica · Uso académico · No distribuir', 0, y);
         context.restore();
         const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('No se pudo convertir la diapositiva.')), 'image/webp', 0.88));
-        bytes += blob.size;
-        if (bytes > 40 * 1024 * 1024) throw new Error('Divide esta presentación en archivos más pequeños.');
-        form.append('pages', blob, n + '.webp'); page.cleanup(); canvas.width = 0;
+        setMessage(`Enviando diapositiva ${n} de ${document.numPages}…`);
+        for(let attempt=0;attempt<3;attempt++){try{await request('/api/presentation-upload?id='+encodeURIComponent(uploadId!)+'&page='+(n-1),{method:'PUT',headers:{'Content-Type':'image/webp'},body:blob});break;}catch(error){if(attempt===2)throw error;}}
+        page.cleanup(); canvas.width = 0;
       }
       setMessage('Publicando las diapositivas en este tema…');
-      const response = await fetch('/api/presentations', {method: 'POST', body: form});
-      const data = await response.json() as {error?: string; presentation: Presentation}; if (!response.ok) throw new Error(data.error);
+      const data=await request('/api/presentation-upload?id='+encodeURIComponent(uploadId!),{method:'PATCH'});
+      uploadId=undefined;
       setItems(current => [...current, data.presentation]); setName(''); if (input.current) input.current.value = '';
       setMessage('Presentación publicada en este tema. Los estudiantes verán las diapositivas con marca de agua, sin acceso al archivo original.');
     } catch (error) {setMessage(error instanceof Error ? error.message : 'No se pudo publicar.');}
-    finally {await loading?.destroy(); setBusy(false);}
+    finally {if(uploadId)await fetch('/api/presentation-upload?id='+encodeURIComponent(uploadId),{method:'DELETE'}).catch(()=>{});await loading?.destroy(); setBusy(false);}
   }
   return <section className="text-section topic-presentations" aria-label={'Presentaciones de ' + title}>
-    <h2>Presentaciones del tema</h2><p>{title}</p>
+    <h2>{weekly?'Presentaciones de la semana':'Presentaciones del tema'}</h2><p>{title}</p>
     {teacher&&<p><a className="button secondary" href={'/admin?recurso='+encodeURIComponent(topic)}>Añadir video, modelo 3D u otro recurso</a></p>}
-    {!items.length && <p className="notice">Este tema tiene su propio espacio de presentaciones. El docente publicará aquí sus diapositivas.</p>}
+    {!items.length && <p className="notice">{weekly?'Esta semana tiene su propio espacio de presentaciones.':'Este tema tiene su propio espacio de presentaciones.'} El docente publicará aquí sus diapositivas.</p>}
     {items.map(item => <div key={item.id}><SlideViewer item={item} endpoint={endpoint}/>{teacher && <button className="button secondary" disabled={busy} onClick={async () => {
       if (!confirm('¿Eliminar «' + item.title + '» de este tema?')) return;
       setBusy(true);
       try {const response = await fetch(endpoint + '&presentation=' + item.id, {method: 'DELETE'}); const data = await response.json() as {error?: string}; if (!response.ok) throw new Error(data.error); setItems(current => current.filter(value => value.id !== item.id)); setMessage('Presentación eliminada.');}
       catch (error) {setMessage(error instanceof Error ? error.message : 'No se pudo eliminar.');} finally {setBusy(false);}
     }}>Eliminar presentación</button>}</div>)}
-    {teacher && <form onSubmit={upload}><h3>Subir presentación a este tema</h3><p>PDF, PPT, PPTX, PPS, PPSX u ODP, hasta 80 diapositivas y 40 MB. Se muestran diapositivas estáticas, sin animaciones ni audio. Para Keynote, Canva o Google Slides, exporta a PDF o PPTX.</p>
+    {teacher && <form onSubmit={upload}><h3>{weekly?'Subir presentación a esta semana':'Subir presentación a este tema'}</h3><p>PDF, PPT, PPTX, PPS, PPSX u ODP hasta 200 MB. Hasta 1000 diapositivas, enviadas una a una (máximo 4 MB por imagen generada). Los archivos grandes requieren memoria disponible en tu equipo. Se muestran diapositivas estáticas, sin animaciones ni audio. Para Keynote, Canva o Google Slides, exporta a PDF o PPTX.</p>
       <label>Título de la presentación<input value={name} onChange={event => setName(event.target.value)} maxLength={250} required disabled={busy}/></label>
       <label>Archivo de presentación<input ref={input} type="file" accept=".pdf,.ppt,.pptx,.pps,.ppsx,.odp" required disabled={busy}/></label>
       <p>PowerPoint y ODP se envían a CloudConvert para convertirlos. Requiere que el administrador configure el servicio y tenga créditos disponibles. Los PDF se preparan en tu navegador.</p>
       <p>Se publicarán imágenes con marca de agua, sin el archivo original. Las capturas de pantalla no pueden bloquearse completamente.</p>
-      <button className="button" disabled={busy}>{busy ? 'Preparando…' : 'Publicar presentación en este tema'}</button>
+      <button className="button" disabled={busy}>{busy ? 'Preparando…' : (weekly?'Publicar presentación en esta semana':'Publicar presentación en este tema')}</button>
     </form>}
     <p role="status">{message}</p>
     <style>{`@media print {.topic-presentations {display:none!important}} .topic-presentations form{padding:20px;background:#edf5f5;border-radius:12px;margin-top:24px}.topic-presentations label{display:block;margin:14px 0}.topic-presentations canvas{display:block;width:100%;height:auto;user-select:none}.slide-controls{display:flex;gap:12px;align-items:center;justify-content:center;margin:12px 0}`}</style>

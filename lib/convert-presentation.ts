@@ -21,7 +21,7 @@ export async function presentationPdf(file:File,topic:string,status:(text:string
     if(!response.ok){if(response.headers.get('content-type')?.includes('application/json'))await read(response);throw Error('No se pudo recuperar el PDF convertido. El servidor no está disponible temporalmente.');}
     if(!response.headers.get('content-type')?.includes('application/pdf'))throw Error('El servicio no entregó un PDF válido.');
     const reader=response.body?.getReader();if(!reader)throw Error('El PDF convertido está vacío.');const chunks:Uint8Array[]=[];let size=0;
-    while(true){const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>40*1024*1024){await reader.cancel();throw Error('El PDF convertido supera 40 MB. Divide la presentación.');}chunks.push(next.value);}
+    while(true){const next=await reader.read();if(next.done)break;size+=next.value.length;if(size>200*1024*1024){await reader.cancel();throw Error('El PDF convertido supera 200 MB. Divide la presentación.');}chunks.push(next.value);}
     const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}return bytes.buffer;
    }
    status('Convirtiendo la presentación. Mantén esta página abierta…');await new Promise(resolve=>setTimeout(resolve,5000));

@@ -1,6 +1,6 @@
 import {allItems, authorized, bindings, sameOrigin} from '@/lib/server';
 import {presentationTopic} from '@/lib/presentations';
-type Stored = {id: string; topic: string; title: string; keys: string[]};
+type Stored = {id: string; topic: string; title: string; keys?: string[]; pageCount?: number};
 const headers = {'Cache-Control': 'private, no-store'};
 const error = (message: string, status = 400) => Response.json({error: message}, {status, headers});
 export async function GET(req: Request) {
@@ -14,12 +14,12 @@ export async function GET(req: Request) {
     if (query.has('page')) {
       const item = presentations.find(item => item.id === query.get('presentation'));
       const page = Number(query.get('page'));
-      if (!item || !Number.isInteger(page) || page < 0 || page >= item.keys.length) return error('Diapositiva no disponible.', 404);
-      const slide = await bindings().BUCKET.get(item.keys[page]);
+      if (!item || !Number.isInteger(page) || page < 0 || page >= (item.pageCount ?? item.keys!.length)) return error('Diapositiva no disponible.', 404);
+      const slide = await bindings().BUCKET.get(item.keys?.[page] ?? `presentations/${item.id}/${page}.webp`);
       if (!slide) return error('Diapositiva no disponible.', 404);
       return new Response(slide.body, {headers: {...headers, 'Content-Type': 'image/webp', 'X-Content-Type-Options': 'nosniff', 'Content-Disposition': 'inline', 'Cross-Origin-Resource-Policy': 'same-origin'}});
     }
-    return Response.json({teacher, presentations: presentations.map(({id, title, keys}) => ({id, title, pages: keys.length}))}, {headers});
+    return Response.json({teacher, presentations: presentations.map(({id, title, keys, pageCount}) => ({id, title, pages: pageCount ?? keys!.length}))}, {headers});
   } catch { return error('No se pudieron consultar las presentaciones.', 503); }
 }
 export async function POST(req: Request) {
@@ -63,7 +63,8 @@ export async function DELETE(req: Request) {
     if (!row) return error('Presentación no disponible.', 404);
     const item: Stored = JSON.parse(row.data);
     await bindings().DB.prepare("DELETE FROM records WHERE id=? AND kind='presentation'").bind(id).run();
-    await bindings().BUCKET.delete(item.keys);
+    if(item.keys) await bindings().BUCKET.delete(item.keys);
+    else for(let start=0;start<(item.pageCount||0);start+=100) await bindings().BUCKET.delete(Array.from({length:Math.min(100,item.pageCount!-start)},(_,i)=>`presentations/${item.id}/${start+i}.webp`));
     return Response.json({ok: true}, {headers});
   } catch { return error('No se pudo completar la eliminación.', 503); }
 }

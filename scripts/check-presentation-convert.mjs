@@ -17,6 +17,9 @@ assert.equal(calls,0);
 globalThis.conversionEnv.CLOUDCONVERT_API_KEY='test-only';
 const response=await api.POST(request());assert.equal(response.status,200);const text=await response.text();assert.ok(!text.includes('test-only'));assert.ok(text.includes('upload.cloudconvert.com'));
 assert.equal(calls,1);
+const large=size=>new Request('https://school.test/api/presentation-convert',{method:'POST',headers:{origin:'https://school.test','Content-Type':'application/json'},body:JSON.stringify({topic:'topic',filename:'large.pptx',size})});
+assert.equal((await api.POST(large(200*1024*1024))).status,200,'Authorized 200 MB deck accepted');
+assert.equal((await api.POST(large(200*1024*1024+1))).status,400,'Defined conversion ceiling enforced');
 let downloadCalls=0,unsafe=false;
 globalThis.fetch=async(url,options)=>{
  if(String(url).startsWith('https://api.cloudconvert.com/'))return Response.json({data:{id:'1234567890',tag:'aula-presentation:topic',status:'finished',tasks:[{name:'output',result:{files:[{url:'https://storage.cloudconvert.com/start'}]}}]}});
