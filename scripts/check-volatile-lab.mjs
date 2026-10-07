@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {build} from 'esbuild';
+const result=await build({entryPoints:['lib/volatile-lab.ts'],bundle:true,platform:'node',format:'esm',write:false});
+const m=await import('data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64'));
+assert.equal(m.headspace(5,2),1/7);
+assert.ok(m.headspace(5,8)<m.headspace(5,1));
+assert.ok(8*m.headspace(5,8)>m.headspace(5,1),'Gas mass can rise as gas concentration falls');
+assert.equal(m.uptake(0,10),0);assert.ok(Math.abs(m.uptake(10*Math.log(20),10)-95)<1e-10);
+assert.equal(m.linearRI(8),1000);assert.equal(m.linearRI(9),1050);assert.equal(m.linearRI(10),1100);
+assert.equal(m.calibrated(105,10,5),10);assert.equal(m.calibrated(0,10,5),-.5);
+assert.equal(m.rsd(m.qcSeries(0)),0);assert.ok(m.rsd(m.qcSeries(50))>m.rsd(m.qcSeries(10)));
+console.log('PASS: phase partition/mass balance, extraction kinetics, RI anchors, calibration and QC drift.');
