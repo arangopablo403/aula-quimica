@@ -1,0 +1,9 @@
+'use client';
+import {useState} from 'react';
+import {gcmsSoftware} from '@/lib/gcms-software';
+export default function GcmsSoftwareCatalog(){
+ const [query,setQuery]=useState('');
+ const normalize=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const matches=gcmsSoftware.filter(row=>normalize(row.slice(0,5).join(' ')).includes(normalize(query)));
+ return <section aria-label="Catálogo de programas GC-MS"><h3>Programas para procesar datos GC-MS</h3><p>Catálogo ampliado de herramientas y alternativas. Elige según tu instrumento, adquisición, objetivo y licencia. No es una lista exhaustiva ni una indicación de instalar todos los programas.</p><p><strong>Ruta de trabajo:</strong> archivo nativo → conversión si hace falta → detección/deconvolución → revisión de espectros y RI → matriz de áreas → control de calidad y estadística.</p><label>Buscar programa o función<input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="RStudio, deconvolución, Python, fabricante…"/></label><p role="status">{matches.length} herramientas disponibles</p>{[...new Set(matches.map(r=>r[0]))].map(group=><section key={group}><h4>{group}</h4><div className="workflow-cards">{matches.filter(r=>r[0]===group).map(([,name,purpose,input,license,url])=><article key={name}><h4>{name}</h4><p>{purpose}</p><p><strong>Datos y alcance:</strong> {input}</p><p><strong>Acceso:</strong> {license}</p><a href={url} target="_blank" rel="noreferrer">Sitio oficial, instalación y manuales ↗</a></article>)}</div></section>)}{!matches.length&&<p>No hay coincidencias. Prueba con el fabricante o una función.</p>}<p>Comprueba la importación con un archivo QC y registra versiones y parámetros antes de procesar todo el estudio. Los programas se ejecutan en tu equipo o en sus servicios; este catálogo no los instala ni envía tus archivos.</p></section>;
+}
