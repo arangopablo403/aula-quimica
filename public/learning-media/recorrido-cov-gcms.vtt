@@ -1,0 +1,26 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:18.000
+Una jeringa introduce una alícuota del espacio de cabeza en el inyector caliente. También puede usarse SPME: los COV se desorben de la fibra, sin inyectar líquido.
+
+00:00:18.000 --> 00:00:31.000
+El gas portador arrastra la banda de moléculas hacia la columna capilar. El modo split o splitless controla la fracción transferida; depende del método.
+
+00:00:31.000 --> 00:00:45.000
+Los COV alternan entre el gas móvil y la película de fase estacionaria. Una interacción mayor con esa película aumenta el tiempo de retención.
+
+00:00:45.000 --> 00:00:59.000
+La volatilidad, la afinidad por la fase y la temperatura del horno determinan la separación. Los compuestos salen en bandas; el orden no depende solo de su masa.
+
+00:00:59.000 --> 00:01:16.000
+La línea caliente conduce los COV a la fuente bajo vacío. En ionización electrónica, típicamente a 70 eV, se forman iones moleculares y fragmentos cargados.
+
+00:01:16.000 --> 00:01:32.000
+En este ejemplo, un cuadrupolo transmite iones de una relación m/z seleccionada. Al barrer distintos valores se obtiene un espectro. Los neutros no se detectan como iones.
+
+00:01:32.000 --> 00:01:47.000
+El detector convierte los impactos de iones en señal eléctrica. El TIC suma la señal iónica de cada barrido y la representa frente al tiempo de retención.
+
+00:01:47.000 --> 00:02:03.000
+Un espectro muestra intensidad frente a m/z. Se compara con bibliotecas, índices de retención y estándares. Una coincidencia de biblioteca no confirma por sí sola la identidad.
+
